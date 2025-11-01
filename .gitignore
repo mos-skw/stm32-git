@@ -57,7 +57,7 @@ JLinkLog.txt
 .vscode/
 # 其他IDE配置
 .idea/
-
+Library/
 
 text-1/text-1/project1.uvguix.skw
 # --- 系统文件 ---
