@@ -6,21 +6,22 @@
 #include "Serial.h"
 #include "Encoder.h"
 #include <string.h>
-#include "IC.h"
+#include "Timer.h"
 
 
 uint8_t KeyNum;
 uint8_t bianji;
 char k;
 int16_t speed=0;
-
+double kp,ki,kd;
 int main(void)
 {
 	OLED_Init();
+	Timer_Init();
 	Motor_Init();
 	Key_Init();
 	Serial_Init();
-	IC_Init();
+	Encoder_Init();
 	
 	bianji=0;
 	OLED_ShowString(1,1,"Speed:");
@@ -77,5 +78,15 @@ int main(void)
 		{
 			
 		}   //从动
+		
+
+		
 	}
+}
+
+
+
+void TIM2_IRQHandler(void)
+{
+	
 }
