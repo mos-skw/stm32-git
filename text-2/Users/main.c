@@ -13,7 +13,7 @@
 uint8_t KeyNum;
 uint8_t bianji;
 char k;
-int16_t speed=0;
+int16_t speed=0,p=0;
 float kp=0.1,ki=0,kd=0,target;
 float actual[2],out[2],err0[2],err1[2],errsum[2];
 int main(void)
@@ -73,8 +73,12 @@ int main(void)
 				}
 				k=Serial_RxPacket[i];
 				speed=speed*10+(int)k;
+				p++;
 			}
+			
 			Motor1_SetSpeed(speed);//电脑输入，电机旋转
+			Serial_SendNumber(speed,p);
+			OLED_ShowNum(1,7,speed,p);
 		}
 		else if(bianji==1)
 		{
@@ -124,7 +128,7 @@ void TIM2_IRQHandler(void)    //PID
 				Motor2_SetSpeed(out[i]);
 			}
 		}
-		printf("%f,%f,%f,%f,%f\n",actual[0],actual[1],out[0],out[1],target);
+		
 		TIM_ClearITPendingBit(TIM2 , TIM_IT_Update);
 	}
 }
