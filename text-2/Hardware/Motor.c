@@ -11,10 +11,16 @@ void Motor_Init(void)
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_Init(GPIOB, &GPIO_InitStructure);
 	
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_14 | GPIO_Pin_15;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_Init(GPIOB, &GPIO_InitStructure);
+
+	
 	PWM_Init();	
 }
 
-void Motor_SetSpeed(int8_t Speed)
+void Motor1_SetSpeed(int8_t Speed)
 {
 	if (Speed>=0)
 	{
@@ -29,3 +35,20 @@ void Motor_SetSpeed(int8_t Speed)
 		PWM_SetCompare3(-Speed);
 	}
 }
+
+void Motor2_SetSpeed(int8_t Speed)
+{
+	if (Speed>=0)
+	{
+		GPIO_SetBits(GPIOB,GPIO_Pin_14);
+		GPIO_ResetBits(GPIOB,GPIO_Pin_15);
+		PWM_SetCompare4(Speed);
+	}
+	else
+	{
+		GPIO_ResetBits(GPIOB,GPIO_Pin_14);
+		GPIO_SetBits(GPIOB,GPIO_Pin_15);
+		PWM_SetCompare4(-Speed);
+	}
+}
+

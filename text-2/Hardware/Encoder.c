@@ -1,72 +1,94 @@
 #include "stm32f10x.h"                  // Device header
 
 int16_t Encoder_Count;
+int16_t Temp1;
+int16_t Temp2;
 
 void Encoder_Init(void)
 {
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);
+
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA,ENABLE);
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO,ENABLE);
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB,ENABLE);
+
 	
-	GPIO_InitTypeDef GPIO_InitStructure;
+	GPIO_InitTypeDef GPIO_InitStructure;	
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_Init(GPIOA, &GPIO_InitStructure);
+	
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_Init(GPIOB, &GPIO_InitStructure);
+
+	TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStructure;
+	TIM_TimeBaseInitStructure.TIM_ClockDivision = TIM_CKD_DIV1;
+	TIM_TimeBaseInitStructure.TIM_CounterMode = TIM_CounterMode_Up;
+	TIM_TimeBaseInitStructure.TIM_Period = 65536 - 1;		//ARR
+	TIM_TimeBaseInitStructure.TIM_Prescaler = 1 - 1;		//PSC
+	TIM_TimeBaseInitStructure.TIM_RepetitionCounter = 0;
+	TIM_TimeBaseInit(TIM3, &TIM_TimeBaseInitStructure);
+
+	TIM_TimeBaseInitStructure.TIM_ClockDivision = TIM_CKD_DIV1;
+	TIM_TimeBaseInitStructure.TIM_CounterMode = TIM_CounterMode_Up;
+	TIM_TimeBaseInitStructure.TIM_Period = 65536 - 1;		//ARR
+	TIM_TimeBaseInitStructure.TIM_Prescaler = 1 - 1;		//PSC
+	TIM_TimeBaseInitStructure.TIM_RepetitionCounter = 0;
+	TIM_TimeBaseInit(TIM4, &TIM_TimeBaseInitStructure);
+
+	TIM_ICInitTypeDef TIM_ICInitStructure;
+	TIM_ICInitStructure.TIM_Channel = TIM_Channel_1;
+	TIM_ICInitStructure.TIM_ICFilter = 0xF;
+	TIM_ICInitStructure.TIM_ICPolarity = TIM_ICPolarity_Rising;
+	TIM_ICInitStructure.TIM_ICPrescaler = TIM_ICPSC_DIV1;
+	TIM_ICInitStructure.TIM_ICSelection = TIM_ICSelection_DirectTI;
+	TIM_ICInit(TIM3, &TIM_ICInitStructure);
+
+	TIM_ICInitStructure.TIM_Channel = TIM_Channel_2;
+	TIM_ICInitStructure.TIM_ICFilter = 0xF;
+	TIM_ICInitStructure.TIM_ICPolarity = TIM_ICPolarity_Rising;
+	TIM_ICInitStructure.TIM_ICPrescaler = TIM_ICPSC_DIV1;
+	TIM_ICInitStructure.TIM_ICSelection = TIM_ICSelection_DirectTI;
+	TIM_ICInit(TIM3, &TIM_ICInitStructure);
+
+	TIM_ICInitStructure.TIM_Channel = TIM_Channel_1;
+	TIM_ICInitStructure.TIM_ICFilter = 0xF;
+	TIM_ICInitStructure.TIM_ICPolarity = TIM_ICPolarity_Rising;
+	TIM_ICInitStructure.TIM_ICPrescaler = TIM_ICPSC_DIV1;
+	TIM_ICInitStructure.TIM_ICSelection = TIM_ICSelection_DirectTI;
+	TIM_ICInit(TIM4, &TIM_ICInitStructure);
+
+	TIM_ICInitStructure.TIM_Channel = TIM_Channel_2;
+	TIM_ICInitStructure.TIM_ICFilter = 0xF;
+	TIM_ICInitStructure.TIM_ICPolarity = TIM_ICPolarity_Rising;
+	TIM_ICInitStructure.TIM_ICPrescaler = TIM_ICPSC_DIV1;
+	TIM_ICInitStructure.TIM_ICSelection = TIM_ICSelection_DirectTI;
+	TIM_ICInit(TIM4, &TIM_ICInitStructure);
+
+	TIM_EncoderInterfaceConfig(TIM3,TIM_EncoderMode_TI12,TIM_ICPolarity_Rising,TIM_ICPolarity_Rising);
 	
-	GPIO_EXTILineConfig(GPIO_PortSourceGPIOA,GPIO_PinSource6);
-	GPIO_EXTILineConfig(GPIO_PortSourceGPIOA,GPIO_PinSource7);
+	TIM_EncoderInterfaceConfig(TIM4,TIM_EncoderMode_TI12,TIM_ICPolarity_Rising,TIM_ICPolarity_Rising);
 	
-	EXTI_InitTypeDef EXTI_InitStructure;
-	EXTI_InitStructure.EXTI_Line = EXTI_Line0 | EXTI_Line1;
-	EXTI_InitStructure.EXTI_LineCmd = ENABLE;
-	EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
-	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;
-	EXTI_Init(&EXTI_InitStructure);
+	TIM_Cmd(TIM3,ENABLE);
 	
-	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
-	NVIC_InitTypeDef NVIC_InitSTructure;
-	NVIC_InitSTructure.NVIC_IRQChannel = EXTI0_IRQn;
-	NVIC_InitSTructure.NVIC_IRQChannelCmd = ENABLE;
-	NVIC_InitSTructure.NVIC_IRQChannelPreemptionPriority = 1;
-	NVIC_InitSTructure.NVIC_IRQChannelSubPriority = 1;
-	NVIC_Init(&NVIC_InitSTructure);
-
-	NVIC_InitSTructure.NVIC_IRQChannel = EXTI1_IRQn;
-	NVIC_InitSTructure.NVIC_IRQChannelCmd = ENABLE;
-	NVIC_InitSTructure.NVIC_IRQChannelPreemptionPriority = 1;
-	NVIC_InitSTructure.NVIC_IRQChannelSubPriority = 2;
-	NVIC_Init(&NVIC_InitSTructure);
-
+	TIM_Cmd(TIM4,ENABLE);
 }
 
-void EXTI0_IRQHandler(void)
+
+int16_t Encoder_Get1(void)
 {
-	if (EXTI_GetITStatus(EXTI_Line0)==SET)
-	{
-		if (GPIO_ReadInputDataBit(GPIOB,GPIO_Pin_1) == 0)
-		{
-			Encoder_Count --;
-		}
-		EXTI_ClearITPendingBit(EXTI_Line0);
-	}
+	Temp1 = TIM_GetCounter(TIM3);
+	TIM_SetCounter(TIM3,0);
+	return Temp1;
 }
 
-int16_t Encoder_Get(void)
+int16_t Encoder_Get2(void)
 {
-	int16_t temp;
-	temp=Encoder_Count;
-	Encoder_Count=0;
-	return temp;
+	Temp2 = TIM_GetCounter(TIM4);
+	TIM_SetCounter(TIM4,0);
+	return Temp2;
 }
 
-void EXTI1_IRQHandler(void)
-{
-	if (EXTI_GetITStatus(EXTI_Line1)==SET)
-	{
-		if (GPIO_ReadInputDataBit(GPIOB,GPIO_Pin_0) == 0)
-		{
-			Encoder_Count++;
-		}
-		EXTI_ClearITPendingBit(EXTI_Line1);
-	}
-}
