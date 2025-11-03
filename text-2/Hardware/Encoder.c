@@ -1,6 +1,8 @@
 #include "stm32f10x.h"                  // Device header
 
 int16_t Encoder_Count;
+int16_t Temp1;
+int16_t Temp2;
 
 void Encoder_Init(void)
 {
@@ -11,29 +13,29 @@ void Encoder_Init(void)
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB,ENABLE);
 
 	
-	GPIO_InitTypeDef GPIO_InitStructure;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(GPIOB, &GPIO_InitStructure);
-	
+	GPIO_InitTypeDef GPIO_InitStructure;	
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_Init(GPIOA, &GPIO_InitStructure);
+	
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_Init(GPIOB, &GPIO_InitStructure);
 
 	TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStructure;
 	TIM_TimeBaseInitStructure.TIM_ClockDivision = TIM_CKD_DIV1;
 	TIM_TimeBaseInitStructure.TIM_CounterMode = TIM_CounterMode_Up;
 	TIM_TimeBaseInitStructure.TIM_Period = 65536 - 1;		//ARR
-	TIM_TimeBaseInitStructure.TIM_Prescaler = 72 - 1;		//PSC
+	TIM_TimeBaseInitStructure.TIM_Prescaler = 1 - 1;		//PSC
 	TIM_TimeBaseInitStructure.TIM_RepetitionCounter = 0;
 	TIM_TimeBaseInit(TIM3, &TIM_TimeBaseInitStructure);
 
 	TIM_TimeBaseInitStructure.TIM_ClockDivision = TIM_CKD_DIV1;
 	TIM_TimeBaseInitStructure.TIM_CounterMode = TIM_CounterMode_Up;
 	TIM_TimeBaseInitStructure.TIM_Period = 65536 - 1;		//ARR
-	TIM_TimeBaseInitStructure.TIM_Prescaler = 72 - 1;		//PSC
+	TIM_TimeBaseInitStructure.TIM_Prescaler = 1 - 1;		//PSC
 	TIM_TimeBaseInitStructure.TIM_RepetitionCounter = 0;
 	TIM_TimeBaseInit(TIM4, &TIM_TimeBaseInitStructure);
 
@@ -78,17 +80,15 @@ void Encoder_Init(void)
 
 int16_t Encoder_Get1(void)
 {
-	int16_t Temp;
-	Temp = TIM_GetCounter(TIM3);
+	Temp1 = TIM_GetCounter(TIM3);
 	TIM_SetCounter(TIM3,0);
-	return Temp;
+	return Temp1;
 }
 
 int16_t Encoder_Get2(void)
 {
-	int16_t Temp;
-	Temp = TIM_GetCounter(TIM4);
+	Temp2 = TIM_GetCounter(TIM4);
 	TIM_SetCounter(TIM4,0);
-	return Temp;
+	return Temp2;
 }
 
