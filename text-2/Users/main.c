@@ -14,12 +14,12 @@ uint8_t KeyNum;
 uint8_t bianji;
 char k;
 int16_t speed=0,p=0;
-float kp1=2.0,ki1=0.1,kd1=0.01,target=0;  // 调整PID参数
-float kp2=5.0,ki2=0.5,kd2=0.01;           // 调整PID参数
+float kp1=0.01,ki1=0,kd1=0,target=0;  // 调整PID参数
+float kp2=0.01,ki2=0,kd2=0;           // 调整PID参数
 float actual[2],out[2],err0[2]={0},err1[2],errsum[2];
 
 // 添加输出限制和死区补偿
-#define OUTPUT_LIMIT 80
+#define OUTPUT_LIMIT 100
 #define DEAD_ZONE 10
 
 int main(void)
@@ -102,7 +102,7 @@ int main(void)
 		
 		// 显示实际速度
 		OLED_ShowSignedNum(1,7,(int16_t)actual[0],5);
-		
+		Serial_Printf("%.lf,%.1f\n", actual[0],actual[1]);
 		Delay_ms(10);
 	}
 }
