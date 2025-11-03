@@ -8,20 +8,20 @@
 #include <stdio.h>
 #include "Timer.h"
 #include <stdlib.h>
+#include <math.h>
 
 int flag=1,send=0,control=0,kt=0;
 //uint8_t KeyNum;
 int8_t bianji;
 char k;
-int16_t speed=0,p=0;
-float kp1=1,ki1=0,kd1=0,target=0;  // 调整PID参数
-float kp2=1,ki2=0,kd2=0;           // 调整PID参数
+//int16_t speed=0,p=0;
+float kp1=3.76,ki1=0.356,kd1=0.15,target=0;  // 调整PID参数
+float kp2=3.79,ki2=0.356,kd2=0.15;           // 调整PID参数
 float err0=0,err1=0,errsum=0;
 int16_t s_1,s_2,out=0;
 int16_t master_speed=0;
 
-// 添加输出限制
-//#define OUTPUT_LIMIT 100
+#define FOLLOW_DEAD_ZONE 5 // 跟随模式死区
 
 int main(void)
 {
@@ -43,26 +43,22 @@ int main(void)
 			if(bianji==1){
 			// 直接速度控制模式
 			if (Serial_RxFlag==1){
-				flag = 1;
-			
-				int len=strlen(Serial_RxPacket);
-			for (int i=0;i<len;i++)
-			{
-				if (Serial_RxPacket[i]=='\0') break;
+				int i=0;
+				char a[5]={0};
+				while (Serial_RxPacket[i+6] != '\0' && i<4)
+				{
+					a[i]=Serial_RxPacket[i+6];
+					i++;
+				}
+				a[i]='\0';
 				
-				if (Serial_RxPacket[i]=='-')
+				if (atoi(a) <= 80 && atoi(a) >= -80)
 				{
-					flag=-1;
+					target = atoi(a);
 				}
-				else if(Serial_RxPacket[i] >= '0' && Serial_RxPacket[i] <= '9')
-				{
-					speed = speed * 10 + (Serial_RxPacket[i] - '0');
-				}
-			}
-				speed *= flag;		
-				target = speed;
 			
-			
+				err0=0,err1=0,errsum=0;
+				out=0;
 				Serial_RxFlag = 0;  // 清除标志
 			}
 			if (control>=1){
@@ -93,6 +89,11 @@ int main(void)
 			if (control>=1){
 			err1 = err0;
 			err0 = master_speed - s_1;
+				
+			if (abs(err0) <= FOLLOW_DEAD_ZONE) {
+					err0 = 0;
+					errsum = 0;  // 清零积分
+				}
 			
 			// 积分限幅
 			errsum += err0;
@@ -123,6 +124,8 @@ void TIM2_IRQHandler(void)
 			{
 				bianji=-bianji;
 				kt=0;
+				err0=0,err1=0,errsum=0;
+				out=0;
 			}
 			kt++;
 		}
