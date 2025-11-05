@@ -11,17 +11,13 @@
 #include <math.h>
 
 int flag=1,send=0,control=0,kt=0;
-//uint8_t KeyNum;
 int8_t bianji;
 char k;
-//int16_t speed=0,p=0;
-float kp1=3.76,ki1=0.356,kd1=0.15,target=0;  // 调整PID参数
-float kp2=3.79,ki2=0.356,kd2=0.15;           // 调整PID参数
+float kp1=3.75,ki1=0.9,kd1=0.1,target=0;  // 调整PID参数
+float kp2=6,ki2=5.5,kd2=0.18;           // 调整PID参数
 float err0=0,err1=0,errsum=0;
 int16_t s_1,s_2,out=0;
 int16_t master_speed=0;
-
-#define FOLLOW_DEAD_ZONE 5 // 跟随模式死区
 
 int main(void)
 {
@@ -52,7 +48,7 @@ int main(void)
 				}
 				a[i]='\0';
 				
-				if (atoi(a) <= 80 && atoi(a) >= -80)
+				if (atoi(a) <= 60 && atoi(a) >= -60)
 				{
 					target = atoi(a);
 				}
@@ -67,8 +63,8 @@ int main(void)
 			
 				// 积分限幅，防止积分饱和
 				errsum += err0;
-				if(errsum > 100) errsum = 100;
-				if(errsum < -100) errsum = -100;
+				if(errsum > 1000) errsum = 1000;
+				if(errsum < -1000) errsum = -1000;
 			
 			out = kp1 * err0 + ki1 * errsum + kd1 * (err0 - err1);
 			
@@ -88,18 +84,11 @@ int main(void)
 			master_speed = s_2;
 			if (control>=1){
 			err1 = err0;
-			err0 = master_speed - s_1;
-				
-			if (abs(err0) <= FOLLOW_DEAD_ZONE) {
-					err0 = 0;
-					errsum = 0;  // 清零积分
-				}
-			
-			// 积分限幅
+			err0 = master_speed - s_1;	
 			errsum += err0;
-			if(errsum > 100) errsum = 100;
-			if(errsum < -100) errsum = -100;
-			
+			if(errsum > 1000) errsum = 1000;
+			if(errsum < -1000) errsum = -1000;
+				
 			out = kp2 * err0 + ki2 * errsum + kd2 * (err0 - err1);
 			
 			Motor1_SetSpeed(out);
