@@ -29,7 +29,7 @@ int time_key=0;
 uint8_t KeyNum=0;
 
 char cen_0[4][20]={"Speed Control","PID","Start"};
-char cen_1[4][3][20]=
+char cen_1[3][3][20]=
 {
     {"Speed_model: ","Speed_dir: "},
 	{"kp: ","ki: ","kd: "},
@@ -40,7 +40,7 @@ int len[3]={2,3,1};
 int bianji=0;//0为普通模式，1为编辑模式
 void dayin()
 {
-    if (bianji==1)
+    if (cen!=0&&bianji==1)
     {
         OLED_ShowString(1,15,"E");//第一行
     }
