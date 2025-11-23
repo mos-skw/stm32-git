@@ -10,13 +10,16 @@
 #include <stdlib.h>
 #include <math.h>
 #include "OLED.h"
+#include "Hongwai.h"
 
-int flag=1,send=0,control=0,kt=0;
+int w1=0,w2=0,w3=0,w4=0;
+int flag=0,control=0,kt=0;
 char k;
-float kp1=3.75,ki1=0.9,kd1=0.1,target=0;  // 调整PID参数
-float kp2=6,ki2=5.5,kd2=0.18;           // 调整PID参数
-float err0=0,err1=0,errsum=0;
-int16_t s_1,s_2,out=0;
+float kp1=3.75,ki1=0.9,kd1=0.1,target_1=0,target_2=0;  // 调整PID参数
+//float kp2=6,ki2=5.5,kd2=0.18;           // 调整PID参数
+float err0_1=0,err1_1=0,errsum_1=0;
+float err0_2=0,err1_2=0,errsum_2=0;
+int16_t s_1,s_2,out_1=0,out_2=0;			//_1为左，_2为右
 int16_t master_speed=0;
 
 uint16_t Num_T=0;
@@ -33,11 +36,61 @@ char cen_1[3][3][20]=
 {
     {"Speed_model: ","Speed_dir: "},
 	{"kp: ","ki: ","kd: "},
-    {"go"}
+    {"Start"}
 };
 int cen_1num[3][3]={{0,0,0},{0,0,0},{0,0,0}};
 int len[3]={2,3,1};
 int bianji=0;//0为普通模式，1为编辑模式
+
+int16_t PID_1(int16_t target_1)
+{
+	if (control>=1){
+		kp1=cen_1num[1][0],ki1=cen_1num[1][1],kd1=cen_1num[1][2];
+				err1_1 = err0_1;
+				err0_1 = target_1 - s_1;
+			
+				// 积分限幅，防止积分饱和
+				errsum_1 += err0_1;
+				if(errsum_1 > 1000) errsum_1 = 1000;
+				if(errsum_1 < -1000) errsum_1 = -1000;
+			
+			out_1 = kp1 * err0_1 + ki1 * errsum_1 + kd1 * (err0_1 - err1_1);
+			
+			// 目标为0时完全停止
+			if (target_1 == 0)
+			{
+				out_1 = 0;
+				errsum_1 = 0;
+			}
+			control=0;
+			}
+	return out_1;
+}
+
+int16_t PID_2(int16_t target_2)
+{
+	if (control>=1){
+		kp1=cen_1num[1][0],ki1=cen_1num[1][1],kd1=cen_1num[1][2];
+				err1_2 = err0_2;
+				err0_2 = target_2 - s_2;
+			
+				// 积分限幅，防止积分饱和
+				errsum_2 += err0_2;
+				if(errsum_2 > 1000) errsum_2 = 1000;
+				if(errsum_2 < -1000) errsum_2 = -1000;
+			
+			out_2 = kp1 * err0_2 + ki1 * errsum_2 + kd1 * (err0_2 - err1_2);
+			
+			// 目标为0时完全停止
+			if (target_2 == 0)
+			{
+				out_2 = 0;
+				errsum_2 = 0;
+			}
+			control=0;
+			}
+	return out_2;
+}
 void dayin()
 {
     if (cen!=0&&bianji==1)
@@ -149,81 +202,46 @@ void dayin()
 
 int main(void)
 {
+	Hongwai_Init();
 	OLED_Init();
 	Key_Init();
 	Encoder_Init();
 	Timer_Init();
 	dayin();
-	Motor_Init();
-	Serial_Init();	
+	Motor_Init();	
 	bianji=1;	
 	while (1)
 	{
-//		if (send>=1)
-//		{
-//			Serial_Printf("%d,%d\n", s_1,s_2);
-//			send=0;
-//		}
-//		// 串口数据处理
-//			if(bianji==1){
-//			// 直接速度控制模式
-//			if (Serial_RxFlag==1){
-//				int i=0;
-//				char a[5]={0};
-//				while (Serial_RxPacket[i+6] != '\0' && i<4)
-//				{
-//					a[i]=Serial_RxPacket[i+6];
-//					i++;
-//				}
-//				a[i]='\0';
-//				
-//				if (atoi(a) <= 60 && atoi(a) >= -60)
-//				{
-//					target = atoi(a);
-//				}
-//			
-//				err0=0,err1=0,errsum=0;
-//				out=0;
-//				Serial_RxFlag = 0;  // 清除标志
-//			}
-//			if (control>=1){
-//				err1 = err0;
-//				err0 = target - s_1;
-//			
-//				// 积分限幅，防止积分饱和
-//				errsum += err0;
-//				if(errsum > 1000) errsum = 1000;
-//				if(errsum < -1000) errsum = -1000;
-//			
-//			out = kp1 * err0 + ki1 * errsum + kd1 * (err0 - err1);
-//			
-//			// 目标为0时完全停止
-//			if (target == 0)
-//			{
-//				out = 0;
-//				errsum = 0;
-//			}
-//			Motor1_SetSpeed(out);
-//			control=0;
-//			}
-//		}
-//		else if (bianji == -1)
-//		{
-//			// 跟随模式
-//			master_speed = s_2;
-//			if (control>=1){
-//			err1 = err0;
-//			err0 = master_speed - s_1;	
-//			errsum += err0;
-//			if(errsum > 1000) errsum = 1000;
-//			if(errsum < -1000) errsum = -1000;
-//				
-//			out = kp2 * err0 + ki2 * errsum + kd2 * (err0 - err1);
-//			
-//			Motor1_SetSpeed(out);
-//			control=0;
-//			}
-//		}
+	//红外
+		if(w2==1 && w3==1)//直行
+		{
+			target_1=30;
+			target_2=30;
+			PID_1(target_1);
+			PID_2(target_2);
+			flag=1;
+		}
+		else if(w2==1 && w1==1)//左弯
+		{
+			target_1=10;
+			target_2=30;
+			PID_1(target_1);
+			PID_2(target_2);
+			flag=1;
+		}
+		else if(w3==1 && w4==1)//右弯
+		{
+			target_1=30;
+			target_2=10;
+			PID_1(target_1);
+			PID_2(target_2);
+			flag=1;
+		}
+		if(bianji==1 && cen==1 && flag==1){
+			Motor1_SetSpeed(out_1);
+			Motor2_SetSpeed(out_2);
+		}
+		
 		if (cen_1num[0][1]==0)
 		{
 			
@@ -415,30 +433,40 @@ int main(void)
 int n[4]={10,10,10,10};
 void TIM2_IRQHandler(void)
 {
-//	if (TIM_GetITStatus(TIM2, TIM_IT_Update) == SET)
-//	{
-//		control++;
-//		send++;
-//		s_1 = Encoder_Get1();
-//		s_2 = Encoder_Get2();
-//	// 简化按键处理
-//		if(GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_0)==0)
-//		{
-//			if(kt>=1)
-//			{
-//				bianji=-bianji;
-//				kt=0;
-//				err0=0,err1=0,errsum=0;
-//				out=0;
-//			}
-//			kt++;
-//		}
-//		TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
-//	}
-	
 	if (TIM_GetITStatus(TIM2,TIM_IT_Update)==SET)
 	{
+		control++;
+		s_1 = Encoder_Get1();
+		s_2 = Encoder_Get2();
 		Num_T++;
+		if(GPIO_ReadInputDataBit(GPIOB,GPIO_Pin_11)==0)
+		{
+			w1=1;
+		}
+		else{
+			w1=0;
+		}
+		if(GPIO_ReadInputDataBit(GPIOB,GPIO_Pin_10)==0)
+		{
+			w2=1;
+		}
+		else{
+			w2=0;
+		}
+		if(GPIO_ReadInputDataBit(GPIOB,GPIO_Pin_1)==0)
+		{
+			w3=1;
+		}
+		else{
+			w3=0;
+		}
+		if(GPIO_ReadInputDataBit(GPIOB,GPIO_Pin_0)==0)
+		{
+			w4=1;
+		}
+		else{
+			w4=0;
+		}
 		if (GPIO_ReadInputDataBit(GPIOB,GPIO_Pin_5)==0)
 		{
 			if (time_key>=2)
