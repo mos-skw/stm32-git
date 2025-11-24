@@ -13,7 +13,7 @@
 #include "Hongwai.h"
 
 int w1=0,w2=0,w3=0,w4=0;
-int flag=0,control=0,kt=0;
+int flag=0,control=0;
 char k;
 float kp1=3.75,ki1=0.9,kd1=0.1,target_1=0,target_2=0;  // 调整PID参数
 //float kp2=6,ki2=5.5,kd2=0.18;           // 调整PID参数
@@ -22,30 +22,17 @@ float err0_2=0,err1_2=0,errsum_2=0;
 int16_t s_1,s_2,out_1=0,out_2=0;			//_1为左，_2为右
 int16_t master_speed=0;
 
-uint16_t Num_T=0;
 int i=0;
 int cen=0;//层
-int cen0=0;//Main Menu中指针位置，指向二级
-int cen1=0;//二级菜单中指针位置，指向最小一级
-int zhixin=1;
 int time_key=0;
-uint8_t KeyNum=0;
 
-char cen_0[4][20]={"Speed Control","PID","Start"};
-char cen_1[3][3][20]=
-{
-    {"Speed_model: ","Speed_dir: "},
-	{"kp: ","ki: ","kd: "},
-    {"Start"}
-};
-int cen_1num[3][3]={{0,0,0},{0,0,0},{0,0,0}};
-int len[3]={2,3,1};
-int bianji=0;//0为普通模式，1为编辑模式
+char cen_0[20]={"Start"};
+char cen_1[20]={"> Go"};
+int bianji=-1;//0为普通模式，1为编辑模式
 
 int16_t PID_1(int16_t target_1)
 {
 	if (control>=1){
-		kp1=cen_1num[1][0],ki1=cen_1num[1][1],kd1=cen_1num[1][2];
 				err1_1 = err0_1;
 				err0_1 = target_1 - s_1;
 			
@@ -70,7 +57,6 @@ int16_t PID_1(int16_t target_1)
 int16_t PID_2(int16_t target_2)
 {
 	if (control>=1){
-		kp1=cen_1num[1][0],ki1=cen_1num[1][1],kd1=cen_1num[1][2];
 				err1_2 = err0_2;
 				err0_2 = target_2 - s_2;
 			
@@ -93,110 +79,20 @@ int16_t PID_2(int16_t target_2)
 }
 void dayin()
 {
-    if (cen!=0&&bianji==1)
+    if (cen==1&&bianji==1)
     {
         OLED_ShowString(1,15,"E");//第一行
     }
-    if (cen==0)
-    {
-        for (int i=0;i<4;i++)
-        {
-            if (cen0==i)
-            {
-                OLED_ShowString(i+1,1,">");
-            }
-            else
-            {
-                OLED_ShowString(i+1,1," ");
-            }
-            OLED_ShowString(i+1,2,cen_0[i]);
-        }
-    }
-
-    else if (cen==1 && cen0==0)
-    {
-		OLED_ShowString(1,1,cen_0[0]);
-        for (int i=0;i<2;i++)
-        {
-            if (cen1==i)
-            {
-                OLED_ShowString(i+2,1,">");
-            }
-            else
-            {
-                OLED_ShowString(i+2,1," ");
-            }
-            OLED_ShowString(i+2,2,cen_1[0][i]);
-            OLED_ShowNum(i+2,14,cen_1num[0][i],1);
-        }
-    }
-    else if (cen==1 && cen0==1)
-    {
-		OLED_ShowString(1,1,cen_0[1]);
-        for (int i=0;i<3;i++)
-        {
-            if (cen1==i)
-            {
-                OLED_ShowString(i+2,1,">");
-            }
-            else
-            {
-                OLED_ShowString(i+2,1," ");
-            }
-            OLED_ShowString(i+2,2,cen_1[1][i]);
-			int j=0;
-			int n=0;
-			if (cen_1num[1][i]<0)
-			{
-				n=(-cen_1num[1][i])/10;
-				if (n==0)
-				{
-					OLED_ShowNum(i+2,14,0,1);
-					j++;
-				}
-				
-				while(n>0)
-				{
-					OLED_ShowNum(i+2,14-j,(n)%10,1);
-					j++;
-					n=n/10;
-				}
-				OLED_ShowString(i+2,14-j,"-");
-				OLED_ShowString(i+2,15,".");
-				OLED_ShowNum(i+2,16,-(cen_1num[1][i])%10,1);				
-			}
-			else
-			{
-				n=cen_1num[1][i]/10;
-				if (n==0)
-				{
-					OLED_ShowNum(i+2,14,0,1);
-				}
-				while(n>0)
-				{
-					OLED_ShowNum(i+2,14-j,n%10,1);
-					j++;
-					n=n/10;
-				}
-				OLED_ShowString(i+2,15,".");
-				OLED_ShowNum(i+2,16,cen_1num[1][i]%10,1);
-			}
-        }
-    }
-    else if (cen==1 && cen0==2)
-    {
-		OLED_ShowString(1,1,cen_0[2]);
-		OLED_ShowString(2,1,">");
-		OLED_ShowString(2,2,cen_0[2]);
-    }
-    else if (cen==1 && cen0==3)
-    {
-		OLED_ShowString(1,1,cen_0[3]);
-		OLED_ShowString(2,1,">");
-		OLED_ShowString(2,2,cen_0[3]);
-    }	
+	else if (cen==0)
+	{
+		OLED_ShowString(1,1,cen_0);
+	}
+	else if (cen==1)
+	{
+		OLED_ShowString(1,1,cen_0);
+		OLED_ShowString(2,1,cen_1);
+	}
 }
-
 
 
 
@@ -209,228 +105,84 @@ int main(void)
 	Timer_Init();
 	dayin();
 	Motor_Init();	
-	bianji=1;	
+	bianji=-1;
+	Motor1_SetSpeed(0);
+	Motor2_SetSpeed(0);	
 	while (1)
 	{
-	//红外
-		if(w2==1 && w3==1)//直行
-		{
-			target_1=30;
-			target_2=30;
-			PID_1(target_1);
-			PID_2(target_2);
-			flag=1;
-		}
-		else if(w2==1 && w1==1)//左弯
-		{
-			target_1=10;
-			target_2=30;
-			PID_1(target_1);
-			PID_2(target_2);
-			flag=1;
-		}
-		else if(w3==1 && w4==1)//右弯
-		{
-			target_1=30;
-			target_2=10;
-			PID_1(target_1);
-			PID_2(target_2);
-			flag=1;
-		}
-		if(bianji==1 && cen==1 && flag==1){
+//	//红外
+//		if(w1==0 && w2==1 && w3==1 && w4==0)//直行
+//		{
+//			target_1=20;
+//			target_2=-20;
+//			PID_1(target_1);
+//			PID_2(target_2);
+//		}
+//		else if(w1==0 && w2==1 && w3==0 && w4==0)//左小弯
+//		{
+//			target_1=15;
+//			target_2=-20;
+//			PID_1(target_1);
+//			PID_2(target_2);
+//		}
+//		else if(w1==1 && w2==0 && w3==0 && w4==0)//左大弯
+//		{
+//			target_1=20;
+//			target_2=-30;
+//			PID_1(target_1);
+//			PID_2(target_2);
+//		}
+//		else if(w1==0 && w2==0 && w3==1 && w4==0)//右小弯
+//		{
+//			target_1=30;
+//			target_2=-15;
+//			PID_1(target_1);
+//			PID_2(target_2);
+//		}
+//		else if(w1==0 && w2==0 && w3==0 && w4==1)//右大弯
+//		{
+//			target_1=30;
+//			target_2=-20;
+//			PID_1(target_1);
+//			PID_2(target_2);
+//		}
+//		else if(w1==1 && w2==1 && w3==1 && w4==1)//十字与停止
+//		{
+//			PID_1(5);
+//			PID_2(-5);
+//			Motor1_SetSpeed(out_1);
+//			Motor2_SetSpeed(out_2);
+//			Delay_ms(100);
+//			if(w1==1 && w2==1 && w3==1 && w4==1)
+//			{
+//			target_1=0;
+//			target_2=0;
+//			PID_1(target_1);
+//			PID_2(target_2);
+//			}
+//			else if(w1==0 && w2==1 && w3==1 && w4==0){
+//			target_1=10;
+//			target_2=-10;
+//			PID_1(target_1);
+//			PID_2(target_2);
+//			}
+//		}
+//		else if(w1==0 && w2==0 && w3==0 && w4==0)//倒车调整？
+//		{
+//			target_1=-10;
+//			target_2=10;
+//			PID_1(target_1);
+//			PID_2(target_2);
+//			flag=1;
+//		}
+		if(bianji==1 && cen==1){
 			Motor1_SetSpeed(out_1);
 			Motor2_SetSpeed(out_2);
 		}
-		
-		if (cen_1num[0][1]==0)
-		{
-			
-			if (cen_1num[0][0]==0)
-			{
-				if (Num_T>=50)
-				{
-					Num_T=0;
-					GPIO_Write(GPIOB,~(0x0001<<(i+12)));
-					i=(i+1)%3;
-				}
-			}
-			else if (cen_1num[0][0]==1)
-			{
-				if (Num_T>=100)
-				{
-					Num_T=0;
-					GPIO_Write(GPIOB,~(0x0001<<(i+12)));
-					i=(i+1)%3;
-				}
-			}
-			else if (cen_1num[0][0]==2)
-			{
-				if (Num_T>=20)
-				{
-					Num_T=0;
-					GPIO_Write(GPIOB,~(0x0001<<(i+12)));
-					i=(i+1)%3;
-				}
-			}
-		}
-		else if (cen_1num[0][1]==1)
-		{
-
-			if (cen_1num[0][0]==0)
-			{
-				if (Num_T>=50)
-				{
-					Num_T=0;
-					GPIO_Write(GPIOB,~(0x0001<<(i+12)));
-					i=(i+2)%3;
-				}
-			}
-			else if (cen_1num[0][0]==1)
-			{
-				if (Num_T>=100)
-				{
-					Num_T=0;
-					GPIO_Write(GPIOB,~(0x0001<<(i+12)));
-					i=(i+2)%3;
-				}
-			}
-			else if (cen_1num[0][0]==2)
-			{
-				if (Num_T>=20)
-				{
-					Num_T=0;
-					GPIO_Write(GPIOB,~(0x0001<<(i+12)));
-					i=(i+2)%3;
-				}
-			}
-		}
-		
-
-		if (bianji==1 && cen0==1)
-		{
-			OLED_Clear();
-			dayin();
-		}
-		if (KeyNum==1 && zhixin==1)
-        {
-			if (bianji==0)
-			{
-				if (cen==0)
-				{
-					cen0=(cen0+2)%3;
-				}
-				else if (cen==1)
-				{
-					cen1=(cen1+len[cen0]-1)%(len[cen0]);
-				}
-			}
-			else if(bianji==1 && cen==1)
-			{
-				if (cen0==0 && cen1==0)
-				{
-					cen_1num[0][0]=(cen_1num[0][0]+1)%3;
-				}
-				else if(cen0==0 && cen1==1)
-				{
-					cen_1num[0][1]=(cen_1num[0][1]+1)%2;
-				}
-				else if(cen0==1 && cen1==0)
-				{
-					cen_1num[1][0]=cen_1num[1][0]+1;
-				}
-				else if(cen0==1 && cen1==1)
-				{
-					cen_1num[1][1]=cen_1num[1][1]+1;
-				}	
-				else if(cen0==1 && cen1==2)
-				{
-					cen_1num[1][2]=cen_1num[1][2]+1;
-				}				
-			}
-			KeyNum=0;
-			zhixin=0;
-			OLED_Clear();
-			dayin();
-        }
-		else if (KeyNum==2 && zhixin==1)
-        {
-			if (bianji==0)
-			{
-				if (cen==0)
-				{
-					cen0=(cen0+1)%3;
-				}
-				else if (cen==1)
-				{
-					cen1=(cen1+1)%(len[cen0]);
-				}
-			}
-			else if(bianji==1 && cen==1)
-			{
-				if (cen0==0 && cen1==0)
-				{
-					cen_1num[0][0]=(cen_1num[0][0]+2)%3;
-				}
-				else if(cen0==0 && cen1==1)
-				{
-					cen_1num[0][1]=(cen_1num[0][1]+1)%2;
-				}
-				else if(cen0==1 && cen1==0)
-				{
-					cen_1num[1][0]=cen_1num[1][0]-1;
-				}
-				else if(cen0==1 && cen1==1)
-				{
-					cen_1num[1][1]=cen_1num[1][1]-1;
-				}	
-				else if(cen0==1 && cen1==2)
-				{
-					cen_1num[1][2]=cen_1num[1][2]-1;
-				}				
-			}
-			KeyNum=0;
-			zhixin=0;
-			OLED_Clear();
-			dayin();
-        }
-		else if (KeyNum==3 && zhixin==1)
-        {
-            if (cen==0)
-            {
-                cen=1;
-                cen1=0;
-            }
-            else if (cen==1 && ((cen0==0) || cen0==1))
-            {
-                bianji=(bianji+1)%2;
-            }
-			KeyNum=0;
-			zhixin=0;
-			OLED_Clear();
-			dayin();
-        }
-		else if (KeyNum==4 && zhixin==1)
-        {
-            if (cen==1 && bianji==0)
-            {
-                cen=0;
-                cen1=0;
-            }
-            else if (bianji==1)
-            {
-                bianji=0;
-            }
-			KeyNum=0;
-			zhixin=0;
-			OLED_Clear();
-			dayin();
-        }
-		
+		dayin();
 	}
 }
 
-
-int n[4]={10,10,10,10};
 void TIM2_IRQHandler(void)
 {
 	if (TIM_GetITStatus(TIM2,TIM_IT_Update)==SET)
@@ -438,108 +190,50 @@ void TIM2_IRQHandler(void)
 		control++;
 		s_1 = Encoder_Get1();
 		s_2 = Encoder_Get2();
-		Num_T++;
 		if(GPIO_ReadInputDataBit(GPIOB,GPIO_Pin_11)==0)
 		{
-			w1=1;
+			w1=0;
 		}
 		else{
-			w1=0;
+			w1=1;
 		}
 		if(GPIO_ReadInputDataBit(GPIOB,GPIO_Pin_10)==0)
 		{
-			w2=1;
+			w2=0;
 		}
 		else{
-			w2=0;
+			w2=1;
 		}
 		if(GPIO_ReadInputDataBit(GPIOB,GPIO_Pin_1)==0)
 		{
-			w3=1;
+			w3=0;
 		}
 		else{
-			w3=0;
+			w3=1;
 		}
 		if(GPIO_ReadInputDataBit(GPIOB,GPIO_Pin_0)==0)
 		{
-			w4=1;
-		}
-		else{
 			w4=0;
 		}
-		if (GPIO_ReadInputDataBit(GPIOB,GPIO_Pin_5)==0)
-		{
-			if (time_key>=2)
-			{
-				KeyNum=1;
-				if (time_key>=100)
-				{
-					if (n[0]>=10)
-					{
-						zhixin=1;
-						n[0]=0;
-					}
-					n[0]++;
-				}
-			}
-			time_key++;
+		else{
+			w4=1;
 		}
-		else if (GPIO_ReadInputDataBit(GPIOA,GPIO_Pin_11)==0)
+		if (GPIO_ReadInputDataBit(GPIOA,GPIO_Pin_0)==0)
 		{
 			if (time_key>=2)
 			{
-				KeyNum=2;
-				if (time_key>=100)
-				{
-					if (n[1]>=10)
-					{
-						zhixin=1;
-						n[1]=0;
-					}
-					n[1]++;
-				}
+				cen=1;
 			}
-			time_key++;
-		}
-		else if (GPIO_ReadInputDataBit(GPIOA,GPIO_Pin_0)==0)
-		{
-			if (time_key>=2)
+			if (time_key>=2 && cen==1)
 			{
-				KeyNum=3;
-				if (time_key>=100)
-				{
-					if (n[2]>=10)
-					{
-						zhixin=1;
-						n[2]=0;
-					}
-					n[2]++;
-				}
-			}
-			time_key++;
-		}
-		else if (GPIO_ReadInputDataBit(GPIOA,GPIO_Pin_9)==0)
-		{
-			if (time_key>=2)
-			{
-				KeyNum=4;
-				if (time_key>=100)
-				{
-					if (n[3]>=10)
-					{
-						zhixin=1;
-						n[3]=0;
-					}
-					n[3]++;
-				}
+				bianji=-bianji;
 			}
 			time_key++;
 		}
 		else
 		{
 			time_key=0;
-			KeyNum=0;
-			zhixin=1;
+			bianji=-1;
 		}
 			TIM_ClearITPendingBit(TIM2,TIM_IT_Update);
 	}
