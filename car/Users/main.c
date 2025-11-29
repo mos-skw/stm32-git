@@ -16,11 +16,12 @@ int w1=0,w2=0,w3=0,w4=0;
 int flag=0,control=0;
 char k;
 float kp1=3.75,ki1=0.9,kd1=0.1,target_1=0,target_2=0;  // 调整PID参数
-//float kp2=6,ki2=5.5,kd2=0.18;           // 调整PID参数
 float err0_1=0,err1_1=0,errsum_1=0;
 float err0_2=0,err1_2=0,errsum_2=0;
 int16_t s_1,s_2,out_1=0,out_2=0;			//_1为左，_2为右
 int16_t master_speed=0;
+float pout_1,iout_1,dout_1;
+float pout_2,iout_2,dout_2;
 
 int i=0;
 int cen=0;//层
@@ -30,60 +31,18 @@ char cen_0[20]={"Start"};
 char cen_1[20]={"> Go"};
 int bianji=-1;//0为普通模式，1为编辑模式
 
-int16_t PID_1(int16_t target_1)
+float min_float(float a, float b)
 {
-	if (control>=1){
-				err1_1 = err0_1;
-				err0_1 = target_1 - s_1;
-			
-				// 积分限幅，防止积分饱和
-				errsum_1 += err0_1;
-				if(errsum_1 > 1000) errsum_1 = 1000;
-				if(errsum_1 < -1000) errsum_1 = -1000;
-			
-			out_1 = kp1 * err0_1 + ki1 * errsum_1 + kd1 * (err0_1 - err1_1);
-			
-			// 目标为0时完全停止
-			if (target_1 == 0)
-			{
-				out_1 = 0;
-				errsum_1 = 0;
-			}
-			control=0;
-			}
-	return out_1;
+    return (a >= b) ? b : a;
+}
+float max_float(float a, float b)
+{
+    return (a >= b) ? a : b;
 }
 
-int16_t PID_2(int16_t target_2)
-{
-	if (control>=1){
-				err1_2 = err0_2;
-				err0_2 = target_2 - s_2;
-			
-				// 积分限幅，防止积分饱和
-				errsum_2 += err0_2;
-				if(errsum_2 > 1000) errsum_2 = 1000;
-				if(errsum_2 < -1000) errsum_2 = -1000;
-			
-			out_2 = kp1 * err0_2 + ki1 * errsum_2 + kd1 * (err0_2 - err1_2);
-			
-			// 目标为0时完全停止
-			if (target_2 == 0)
-			{
-				out_2 = 0;
-				errsum_2 = 0;
-			}
-			control=0;
-			}
-	return out_2;
-}
 void dayin()
 {
-    if (cen==1&&bianji==1)
-    {
-        OLED_ShowString(1,15,"E");//第一行
-    }
-	else if (cen==0)
+	if (cen==0)
 	{
 		OLED_ShowString(1,1,cen_0);
 	}
@@ -104,80 +63,97 @@ int main(void)
 	Encoder_Init();
 	Timer_Init();
 	dayin();
-	Motor_Init();	
+	Motor_Init();
 	bianji=-1;
-	Motor1_SetSpeed(0);
-	Motor2_SetSpeed(0);	
 	while (1)
 	{
-//	//红外
-//		if(w1==0 && w2==1 && w3==1 && w4==0)//直行
-//		{
-//			target_1=20;
-//			target_2=-20;
-//			PID_1(target_1);
-//			PID_2(target_2);
-//		}
-//		else if(w1==0 && w2==1 && w3==0 && w4==0)//左小弯
-//		{
-//			target_1=15;
-//			target_2=-20;
-//			PID_1(target_1);
-//			PID_2(target_2);
-//		}
-//		else if(w1==1 && w2==0 && w3==0 && w4==0)//左大弯
-//		{
-//			target_1=20;
-//			target_2=-30;
-//			PID_1(target_1);
-//			PID_2(target_2);
-//		}
-//		else if(w1==0 && w2==0 && w3==1 && w4==0)//右小弯
-//		{
-//			target_1=30;
-//			target_2=-15;
-//			PID_1(target_1);
-//			PID_2(target_2);
-//		}
-//		else if(w1==0 && w2==0 && w3==0 && w4==1)//右大弯
-//		{
-//			target_1=30;
-//			target_2=-20;
-//			PID_1(target_1);
-//			PID_2(target_2);
-//		}
-//		else if(w1==1 && w2==1 && w3==1 && w4==1)//十字与停止
-//		{
-//			PID_1(5);
-//			PID_2(-5);
-//			Motor1_SetSpeed(out_1);
-//			Motor2_SetSpeed(out_2);
-//			Delay_ms(100);
-//			if(w1==1 && w2==1 && w3==1 && w4==1)
-//			{
-//			target_1=0;
-//			target_2=0;
-//			PID_1(target_1);
-//			PID_2(target_2);
-//			}
-//			else if(w1==0 && w2==1 && w3==1 && w4==0){
-//			target_1=10;
-//			target_2=-10;
-//			PID_1(target_1);
-//			PID_2(target_2);
-//			}
-//		}
-//		else if(w1==0 && w2==0 && w3==0 && w4==0)//倒车调整？
-//		{
-//			target_1=-10;
-//			target_2=10;
-//			PID_1(target_1);
-//			PID_2(target_2);
-//			flag=1;
-//		}
-		if(bianji==1 && cen==1){
-			Motor1_SetSpeed(out_1);
-			Motor2_SetSpeed(out_2);
+	//红外
+		if(w1==1 && w4==1)//十字
+		{
+			target_1=-45;
+			target_2=45;
+		}
+		else if(w1==1 && w2==0)//左大弯
+		{
+			target_1=-45;
+			target_2=5;
+		}
+		else if(w4==1 && w3==0)//右大弯
+		{
+			target_1=-5;
+			target_2=45;
+		}
+		else if(w2==1 && w3==0)//左小弯
+		{
+			target_1=-45;
+			target_2=15;
+		}
+		else if(w2==0 && w3==1)//右小弯
+		{
+			target_1=-15;
+			target_2=45;
+		}
+		else if(w2==1 && w3==1)//直行
+		{
+			target_1=-45;
+			target_2=45;
+		}
+		
+		if(cen==1)
+		{
+		if (control>=1){
+				err1_1 = err0_1;
+				err1_2 = err0_2;
+				err0_1 = target_1 - s_1;
+				err0_2 = target_2 - s_2;
+				errsum_1 += err0_1;
+				errsum_2 += err0_2;
+				pout_1=kp1*err0_1;
+				pout_2=kp1*err0_2;
+				if (err0_1 < 1000 && err0_1 > -1000)
+				{
+					iout_1=ki1*errsum_1;
+					iout_1=min_float(iout_1,1000);
+					iout_1=max_float(iout_1,-1000);
+				}
+				else
+				{
+					iout_1=0;
+				}
+				if (err0_2 < 1000 && err0_2 > -1000)
+				{
+					iout_2=ki1*errsum_2;
+					iout_2=min_float(iout_2,1000);
+					iout_2=max_float(iout_2,-1000);
+				}
+				else
+				{
+					iout_2=0;
+				}				
+				dout_1=kd1*(err0_1-err1_1);
+				out_1 = pout_1 + iout_1 + dout_1;	
+				dout_2=kd1*(err0_2-err1_2);
+				out_2 = pout_2 + iout_2 + dout_2;	
+				if (out_1 > 100)
+				{
+					out_1 = 100;
+				}
+				if (out_1 < -100)
+				{
+					out_1 = -100;
+				}			
+				Motor1_SetSpeed(out_1);
+				if (out_2 > 100)
+				{
+					out_2 = 100;
+				}
+				if (out_2 < -100)
+				{
+					out_2 = -100;
+				}			
+				Motor2_SetSpeed(out_2);
+				control = 0;
+			}
 		}
 		dayin();
 	}
@@ -190,28 +166,28 @@ void TIM2_IRQHandler(void)
 		control++;
 		s_1 = Encoder_Get1();
 		s_2 = Encoder_Get2();
-		if(GPIO_ReadInputDataBit(GPIOB,GPIO_Pin_11)==0)
+		if(GPIO_ReadInputDataBit(GPIOB,GPIO_Pin_11)==1)
 		{
 			w1=0;
 		}
 		else{
 			w1=1;
 		}
-		if(GPIO_ReadInputDataBit(GPIOB,GPIO_Pin_10)==0)
+		if(GPIO_ReadInputDataBit(GPIOB,GPIO_Pin_10)==1)
 		{
 			w2=0;
 		}
 		else{
 			w2=1;
 		}
-		if(GPIO_ReadInputDataBit(GPIOB,GPIO_Pin_1)==0)
+		if(GPIO_ReadInputDataBit(GPIOB,GPIO_Pin_1)==1)
 		{
 			w3=0;
 		}
 		else{
 			w3=1;
 		}
-		if(GPIO_ReadInputDataBit(GPIOB,GPIO_Pin_0)==0)
+		if(GPIO_ReadInputDataBit(GPIOB,GPIO_Pin_0)==1)
 		{
 			w4=0;
 		}
@@ -224,16 +200,11 @@ void TIM2_IRQHandler(void)
 			{
 				cen=1;
 			}
-			if (time_key>=2 && cen==1)
+			if (time_key>=4 && cen==1)
 			{
 				bianji=-bianji;
 			}
 			time_key++;
-		}
-		else
-		{
-			time_key=0;
-			bianji=-1;
 		}
 			TIM_ClearITPendingBit(TIM2,TIM_IT_Update);
 	}
